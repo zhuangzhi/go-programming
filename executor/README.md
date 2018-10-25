@@ -21,3 +21,37 @@ For some IO related cases (like DB access, CDN access), we want to limit the con
 ### Case 3. In case of IO error
 
 In case of some error occurred on IO operation, we expect user doing retry on Executor, then it would slow the rate of following IO opertion to reduce the access rate of IO, it would protect the target service (DB/Cache/CDN etc.)  
+
+## Interface
+
+```go
+
+type Local interface {
+    GetId() int64
+    GetName() string
+    Get(key interface{})interface{}
+    Set(key, value interface{})
+}
+
+type RunOptions struct {
+    OnCancel func()
+    Timeout time.Duration
+    RetryAttemps int
+    RetryInterval time.Duration
+}
+
+type RunOption func(*RunOptions)
+
+type Runable func(Local)
+
+type Callable func(Local) (interface{}, error)
+
+type Executor interface {
+    Submit(Runnable, opts ... RunOptions) error
+    Invoke(Callable, opts... RunOptions) (interface{}, error)
+    QueuedTasks() int
+    Stop() (<-chan struct{}, error)
+    Terminate(ctx Context) error
+}
+
+```
